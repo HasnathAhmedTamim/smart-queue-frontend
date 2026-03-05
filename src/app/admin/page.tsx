@@ -12,6 +12,7 @@ export default function AdminPage() {
   const { queue, status, eventId } = useQueueSSE();
 
   return (
+    //This is Admin Dashboard
     <main className="min-h-screen bg-gray-50 text-gray-900">
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-6">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
