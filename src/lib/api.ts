@@ -1,6 +1,6 @@
 import { API } from "@/lib/env";
 import type { CreateTokenRequest, CreateTokenResponse, NextResponse } from "@/types/queue";
-
+import type { Service } from "@/types/queue";
 type ApiErrorPayload = { error?: { message?: string } };
 
 async function parseJson(res: Response) {
@@ -42,4 +42,11 @@ export async function adminNext(adminKey: string): Promise<NextResponse> {
 
 export function queueStreamURL() {
   return `${API}/api/stream/queue`;
+}
+
+export async function listServices(): Promise<Service[]> {
+  const res = await fetch(`${API}/api/services`, { method: "GET" });
+  const data = await parseJson(res);
+  if (!res.ok) throw new Error(getErrorMessage(data, "Failed to load services"));
+  return data as Service[];
 }

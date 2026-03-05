@@ -1,21 +1,61 @@
 "use client";
 
-import { useState } from "react";
-import type { ServiceCode, CreateTokenResponse } from "@/types/queue";
-import { createToken } from "@/lib/api";
+import { useEffect, useState } from "react";
+import type { Service, ServiceCode, CreateTokenResponse } from "@/types/queue";
+import { createToken, listServices } from "@/lib/api";
 import { getErrorMessage } from "@/lib/errors";
 
+const FALLBACK_SERVICES: Service[] = [
+  { code: "A", name: "Account Opening" },
+  { code: "D", name: "Deposit" },
+  { code: "L", name: "Loan Desk" },
+];
+
 export function TokenForm() {
+  const [services, setServices] = useState<Service[]>([]);
   const [service, setService] = useState<ServiceCode>("A");
+
   const [name, setName] = useState("");
   const [result, setResult] = useState<CreateTokenResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
+  const [servicesLoading, setServicesLoading] = useState(true);
+
+  // Load services dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      setServicesLoading(true);
+      try {
+        const data = await listServices();
+        if (!mounted) return;
+
+        const safe = Array.isArray(data) && data.length > 0 ? data : FALLBACK_SERVICES;
+        setServices(safe);
+        setService(safe[0].code);
+      } catch {
+        if (!mounted) return;
+        setServices(FALLBACK_SERVICES);
+        setService("A");
+      } finally {
+        if (mounted) setServicesLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   async function onCreate() {
     setError(null);
     setResult(null);
     setLoading(true);
+
     try {
       const res = await createToken({
         service_code: service,
@@ -36,17 +76,25 @@ export function TokenForm() {
         <label htmlFor="service" className="text-sm font-medium">
           Service
         </label>
+
         <select
           id="service"
           name="service"
-          className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm disabled:opacity-60"
           value={service}
           onChange={(e) => setService(e.target.value as ServiceCode)}
+          disabled={servicesLoading}
         >
-          <option value="A">A — Account Opening</option>
-          <option value="D">D — Deposit</option>
-          <option value="L">L — Loan Desk</option>
+          {(servicesLoading ? FALLBACK_SERVICES : services).map((s) => (
+            <option key={s.code} value={s.code}>
+              {s.code} — {s.name}
+            </option>
+          ))}
         </select>
+
+        {servicesLoading && (
+          <p className="mt-1 text-xs text-gray-500">Loading services...</p>
+        )}
       </div>
 
       <div>

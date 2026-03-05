@@ -19,3 +19,6 @@ export type CreateTokenResponse = {
 export type NextResponse = {
   current_token: string;
 };
+
+// For future extensibility, we can add more fields to Service type without changing the API request/response
+export type Service = { code: ServiceCode; name: string };
