@@ -1,6 +1,7 @@
 import { API } from "@/lib/env";
 import type { CreateTokenRequest, CreateTokenResponse, NextResponse } from "@/types/queue";
 import type { Service } from "@/types/queue";
+import type { TokenItem, TokenStatus } from "@/types/queue";
 type ApiErrorPayload = { error?: { message?: string } };
 
 async function parseJson(res: Response) {
@@ -49,4 +50,15 @@ export async function listServices(): Promise<Service[]> {
   const data = await parseJson(res);
   if (!res.ok) throw new Error(getErrorMessage(data, "Failed to load services"));
   return data as Service[];
+}
+
+export async function listTokens(status: TokenStatus, limit = 50): Promise<TokenItem[]> {
+  const url = new URL(`${API}/api/tokens`);
+  url.searchParams.set("status", status);
+  url.searchParams.set("limit", String(limit));
+
+  const res = await fetch(url.toString(), { method: "GET" });
+  const data = await parseJson(res);
+  if (!res.ok) throw new Error(getErrorMessage(data, "Failed to load tokens"));
+  return data as TokenItem[];
 }
